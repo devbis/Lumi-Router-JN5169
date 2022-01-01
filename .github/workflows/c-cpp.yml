@@ -18,31 +18,31 @@ jobs:
       - uses: actions/checkout@v2
       - name: Get toolchain
         run: |
-          mkdir -p ${{ env.TOOLCHAIN_DIR }} && \
-          wget https://github.com/openlumi/BA2-toolchain/releases/download/20201219/ba-toolchain-20201219.tar.bz2 -O - | tar -jx -C ${{ env.TOOLCHAIN_DIR }} && \
-          mv ${{ env.TOOLCHAIN_DIR }}/ba-toolchain/* ${{ env.TOOLCHAIN_DIR }} && \
-          rm -rf ${{ env.TOOLCHAIN_DIR }}/ba-toolchain
+          mkdir -p ${{github.workspace}}/${{ env.TOOLCHAIN_DIR }} && \
+          wget https://github.com/openlumi/BA2-toolchain/releases/download/20201219/ba-toolchain-20201219.tar.bz2 -O - | tar -jx -C ${{github.workspace}}/${{ env.TOOLCHAIN_DIR }} && \
+          mv ${{github.workspace}}/${{ env.TOOLCHAIN_DIR }}/ba-toolchain/* ${{github.workspace}}/${{ env.TOOLCHAIN_DIR }} && \
+          rm -rf ${{github.workspace}}/${{ env.TOOLCHAIN_DIR }}/ba-toolchain
       - name: Get SDK
         run: |
-          mkdir -p ${{ env.SDK_DIR }} && \
-          cd ${{ env.SDK_DIR }} && \
+          mkdir -p ${{github.workspace}}/${{ env.SDK_DIR }} && \
+          cd ${{github.workspace}}/${{ env.SDK_DIR }} && \
           wget https://github.com/devbis/JN-SW-4170/archive/${{ env.SDK_COMMIT }}.zip -O sdk.zip && \
           unzip sdk.zip && \
           rm sdk.zip && \
-          cd - && \
-          mv ${{ env.SDK_DIR }}/JN-SW-4170*/* ${{ env.SDK_DIR }} && \
-          rm -rf ${{ env.SDK_DIR }}/JN-SW-4170* \
+          mv JN-SW-4170*/* . && \
+          rm -rf JN-SW-4170* && \
+          cd -
       - name: Install xmltodict and pycryptodome
         run: pip3 install xmltodict pycryptodome
-      - name: CMake
+      - name: Configure CMake
         id: configure
         run: |
-          mkdir -p build && cd build
-          cmake -DTOOLCHAIN_PREFIX=$(realpath ../${{ env.TOOLCHAIN_DIR }}) -DSDK_PREFIX=$(realpath ../${{ env.SDK_DIR }}) ..
-      - name: make
-        id: make
+          cmake -B ${{github.workspace}}/build -DTOOLCHAIN_PREFIX=$(realpath ${{github.workspace}}/${{ env.TOOLCHAIN_DIR }}) -DSDK_PREFIX=$(realpath ${{github.workspace}}/${{ env.SDK_DIR }})
+      - name: Build
+        id: build
         run: |
-          cd build && make -j$(($(nproc)+1)) ${{ env.TARGET }} && rm src/*tmp.bin
+          cmake --build ${{github.workspace}}/build --target ${{ env.TARGET }} -j$(($(nproc)+1))
+          rm ${{github.workspace}}/build/src/*tmp.bin
           echo "::set-output name=status::success"
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2.2.2
@@ -52,8 +52,8 @@ jobs:
           name: firmwares.zip
           # A file, directory or wildcard pattern that describes what to upload
           path: |
-            ${{ env.ARTIFACT_DIR }}/*.bin
-            ${{ env.ARTIFACT_DIR }}/*.ota
+            ${{github.workspace}}/${{ env.ARTIFACT_DIR }}/*.bin
+            ${{github.workspace}}/${{ env.ARTIFACT_DIR }}/*.ota
 
       - name: Generate release tag
         id: tag
