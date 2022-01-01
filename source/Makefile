@@ -38,8 +38,8 @@ TARGET = LumiRouter
 
 BUILD_DATE = 20210320
 CFLAGS    += -DBUILD_DATE_STRING=\"$(BUILD_DATE)\"
-TOOL_COMMON_BASE_DIR = ..
-TOOLCHAIN_PATH = ba-toolchain
+TOOL_COMMON_BASE_DIR =
+TOOLCHAIN_PATH ?= ba-toolchain
 DISABLE_LTO = 1
 
 ###############################################################################
@@ -131,7 +131,8 @@ GENERATED_FILE_NAME = $(TARGET)$(TARGET_FEATURES)_$(BUILD_DATE)
 # Path definitions
 
 # Use if application directory contains multiple targets
-SDK_BASE_DIR = $(abspath ../sdk/$(JENNIC_SDK))
+SDK_BASE_DIR ?= $(abspath ../sdk/$(JENNIC_SDK))
+COMPONENTS_BASE_DIR = $(SDK_BASE_DIR)/Components
 APP_BASE     = $(abspath ..)
 APP_BLD_DIR  = $(APP_BASE)/build
 APP_SRC_DIR  = $(APP_BASE)/source
@@ -234,7 +235,7 @@ $(APP_BLD_DIR)/%.o: %.S
 	$(CC) -c -o $(subst source,build,$@) $(CFLAGS) $(INCFLAGS) $< -MD -MF $(APP_BLD_DIR)/$*.d -MP
 	@echo
 
-$(APP_BLD_DIR)/%.o: %.c 
+$(APP_BLD_DIR)/%.o: %.c $(APP_SRC_DIR)/pdum_gen.c $(APP_SRC_DIR)/pdum_gen.h $(APP_SRC_DIR)/pdum_apdu.S $(APP_SRC_DIR)/zps_gen.c $(APP_SRC_DIR)/zps_gen.h
 	$(info Compiling $< ...)
 	$(CC) -c -o $(subst source,build,$@) $(CFLAGS) $(INCFLAGS) $< -MD -MF $(APP_BLD_DIR)/$*.d -MP
 	@echo
